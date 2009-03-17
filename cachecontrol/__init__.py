@@ -25,35 +25,35 @@ def view_set_cache(name, expire_time=None, args=[], cache_func=lambda: None):
     return value
 
 def clear_cache(name, args):
-    print "Clearing cache %s" % name
+#    print "Clearing cache %s" % name
     if len(args) > 1:
         tags = cache_tags(name, args)
         for tag in tags:
-            print "   Deleted key %s" % tag
+#            print "   Deleted key %s" % tag
             #cache.set(tag, datetime.now())
             cache.delete(tag)
     name = glue_cache(name, args)
     cache.delete(name)
 
 def set_cache(name, value, expire_time, args):
-    print "Setting cache %s" % name
+  #  print "Setting cache %s" % name
     if len(args) > 1:
         time = datetime.now()
         tags = cache_tags(name, args)
         for tag in tags:
             cache.set(tag, time, expire_time)
     cache_key = glue_cache(name, args)
-    print "   Cache key is %s" % cache_key
+ #   print "   Cache key is %s" % cache_key
     cache.set(cache_key, value, expire_time)
 
 def get_cache(name, args):
-    print "Getting cache %s" % name
+#    print "Getting cache %s" % name
     cache_key = glue_cache(name, args)
-    print "   Cache key is %s" % cache_key
+#    print "   Cache key is %s" % cache_key
     result = cache.get(cache_key)
     
     if len(args) > 1 and result is not None:
-        print "   There are few arguments on cache %s" % name
+#        print "   There are few arguments on cache %s" % name
         tags = cache_tags(name, args)
         time = cache.get(tags[0])
         if time:
@@ -62,12 +62,12 @@ def get_cache(name, args):
                 if not c or c > time:
                     result = None
                     break
-                else:
-                    print "   Tag %s is OK: %s %s" % (tag, c, type(c))
+#                else:
+#                    print "   Tag %s is OK: %s %s" % (tag, c, type(c))
         else:
             result = None
                 
-    print u"   Cache result is: %s" % unicode(result)[:20]
+#    print u"   Cache result is: %s" % unicode(result)[:20]
     return result
 
 class AlreadyRegistered(Exception):
