@@ -36,7 +36,7 @@ def clear_cache(name, args):
     cache.delete(name)
 
 def set_cache(name, value, expire_time, args):
-  #  print "Setting cache %s" % name
+    print "Setting cache %s" % name
     if len(args) > 1:
         time = datetime.now()
         tags = cache_tags(name, args)
@@ -47,13 +47,13 @@ def set_cache(name, value, expire_time, args):
     cache.set(cache_key, value, expire_time)
 
 def get_cache(name, args):
-#    print "Getting cache %s" % name
+    print "Getting cache %s" % name
     cache_key = glue_cache(name, args)
 #    print "   Cache key is %s" % cache_key
     result = cache.get(cache_key)
     
     if len(args) > 1 and result is not None:
-#        print "   There are few arguments on cache %s" % name
+        print "   There are few arguments on cache %s" % name
         tags = cache_tags(name, args)
         time = cache.get(tags[0])
         if time:
@@ -62,8 +62,8 @@ def get_cache(name, args):
                 if not c or c > time:
                     result = None
                     break
-#                else:
-#                    print "   Tag %s is OK: %s %s" % (tag, c, type(c))
+                else:
+                    print "   Tag %s is OK: %s %s" % (tag, c, type(c))
         else:
             result = None
                 
@@ -77,23 +77,29 @@ class DeprecatedName(Exception):
 
 def _clear_cached(name, args_func, *args, **kwargs):
     obj = kwargs['instance']
-    args_ = args_func(obj)
-    
-    clear_cache(name, args_)
+    if registry._registry[name] == 0:
+        cache.delete(name)
+    elif registry._registry[name] == 1:
+        number, value = args_func(obj)
+        cache.delete(glue_cache(name, [value]))
+    else:
+        number, value = args_func(obj)
+        tag = glue_cache('cc_time_tag', [name, 'arg', number, value])
+        cache.delete(tag)
 
 class CacheRegistry(object):
 
     def __init__(self):
         self._registry = {}
 
-    def register(self, name, model_pairs):
+    def register(self, name, num_args, model_pairs):
         name = str(name)
         if name in self._registry:
             raise AlreadyRegistered(u'name %s already registered.' % name)
         if ':' in name or '|' in name:
             raise DeprecatedName(u'name of cache can not consist "|" or ":"')
         
-        self._registry[name] = model_pairs
+        self._registry[name] = num_args
         
         for Model, args_func in model_pairs:
             signals.post_save.connect(curry(_clear_cached, name, args_func), sender=Model, weak=False)
